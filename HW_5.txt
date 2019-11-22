@@ -1,0 +1,32 @@
+﻿using System;
+
+
+//Create interface IDeveloper with property Tool, methods Create() and Destroy()
+//Create two classes Programmer(with field language) and Builder(with field tool), which implement this interface.
+//Create array of IDeveloper and add some Programmers and Builders to it.Call Create() and Destroy() methods, property Tool for all of it
+//Implement interface IComparable for clases and sort array of IDeveloper
+
+
+//Create Console Application project in VS.In the Main() method declare Dictionary<uint, string>.
+//Add to Dictionary from Console seven pairs(ID, Name) of some persons.
+//Ask user to enter ID, then find and write corresponding Name from your Dictionary.If you can't find this ID - say about it to user. 
+
+
+namespace Homework_5
+{
+    class Program
+    {
+        interface IDeveloper
+        {
+            string Toll { get; set; }
+            void Create();
+            void Destroy();
+        }
+        class Programmer
+        { }
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Hello World!");
+        }
+    }
+}
