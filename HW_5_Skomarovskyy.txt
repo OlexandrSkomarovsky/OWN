@@ -1,0 +1,119 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+//Create interface IDeveloper with property Tool, methods Create() and Destroy()
+//Create two classes Programmer(with field language) and Builder(with field tool), which implement this interface.
+//Create array of IDeveloper and add some Programmers and Builders to it.Call Create() and Destroy() methods, property Tool for all of it
+//Implement interface IComparable for clases and sort array of IDeveloper
+
+
+//Create Console Application project in VS.In the Main() method declare Dictionary<uint, string>.
+//Add to Dictionary from Console seven pairs(ID, Name) of some persons.
+//Ask user to enter ID, then find and write corresponding Name from your Dictionary.If you can't find this ID - say about it to user. 
+
+
+namespace Homework_5
+{
+    class Program
+    {
+        public interface IDeveloper
+        {
+            string Toll { get; set; }
+            void Create();
+            void Destroy();
+        }
+        public class Programmer: IDeveloper
+        {
+            string language;
+            public void Create()
+            {
+                Console.WriteLine("I crete somethihg");
+            }
+            public void Destroy(List<IDeveloper> lst, IDeveloper Programmer)
+            {
+                lst.Remove(Programmer);
+
+            }
+            public Programmer(string language)
+            {
+                this.language = language;
+            }
+
+            public Programmer()
+            {
+            }
+
+            public string Tool
+            {
+                get { return language; }
+                set { language = value; }
+            }
+        }
+        public class Builder: IDeveloper
+        {
+            public string tool;
+            public void Create()
+            {
+                Console.WriteLine("I crete somethihg {0}", tool);
+            }
+            public void Destroy(List<IDeveloper> lst, IDeveloper Builder)
+            {
+                lst.Remove(Builder); 
+            }
+            public Builder(string tool)
+            {
+                this.tool = tool;
+            }
+
+            public Builder()
+            {
+            }
+
+            public string Tool
+            {
+                get { return tool; }
+                set { tool = value; }
+            }
+        }
+        static void Main(string[] args)
+        {
+            List<IDeveloper> lst = new List<IDeveloper>();
+            IDeveloper programer01 = new Programmer ();
+            programer01.Create();
+            lst.Add(programer01);
+            IDeveloper programer02 = new Programmer();
+            programer02.Create();
+            lst.Add(programer02);
+            IDeveloper builder01 = new Builder();
+            builder01.Create();
+            lst.Add(builder01);
+            IDeveloper builder02 = new Builder();
+            builder02.Create();
+            lst.Add(builder02);
+            Console.WriteLine("developers:");
+            foreach (IDeveloper i in lst)
+            {
+                Console.WriteLine(i);
+            }
+            lst[3].Destroy(lst, builder02);
+            lst[0].Destroy(lst, programer01);
+            Console.WriteLine("Without 2st tool:");
+            foreach (IDeveloper s in lst)
+            {
+                Console.WriteLine(i);
+
+            }
+
+            lst.Sort();
+            Console.WriteLine("sorted");
+            foreach (IDeveloper i in lst)
+            {
+                Console.WriteLine(i);
+
+            }
+        }
+    }
+}
