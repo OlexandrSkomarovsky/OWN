@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 //Create interface IDeveloper with property Tool, methods Create() and Destroy()
@@ -23,10 +24,56 @@ namespace Homework_5
             void Destroy();
         }
         class Programmer
-        { }
+        {
+             string language;
+            void Create()
+            {
+                Console.WriteLine("I crete somethihg");
+            }
+            void Destroy()
+            {
+                Console.WriteLine("I destroy this.");
+
+            }
+            public  Programmer(string language)
+                {
+                    this.language = language;
+                }
+            public string Tool
+            {
+                get { return language; }
+                set { language = value; }
+            }
+        }
+        class Builder
+        {
+            string tool;
+            void Create()
+            {
+                Console.WriteLine("I crete somethihg");
+            }
+            void Destroy()
+            {
+                Console.WriteLine("I destroy this.");
+            }
+            public Builder(string tool)
+            {
+                this.tool = tool;
+            }
+            public string Tool
+            {
+                get { return tool; }
+                set { tool = value; }
+            }
+        }
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            List < IDeveloper > lst  = new List<IDeveloper>();
+            for (int i = 0; i < 3; i++)
+            {
+
+            }
+
         }
     }
 }
