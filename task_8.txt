@@ -1,0 +1,125 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+//1. Add two classes Persons and Staff(use the presentation code)
+//2. Create two classes Teacher and Developer, derived from Staff.
+//Add field subject for class Teacher;
+//Add field level for class Developer;
+//override method Print for both classes.
+//3. In Main, specify a list of Person type and add objects of each type to it. Call for each item in the list method Print ().
+//4. Enter the person's name. If this name present in  list - print information about this person
+//5. Sort list by name, output to file
+//6. Create a list of Employees and move only workers there. Sort them by salary.
+
+
+namespace Task_8
+{
+
+    abstract class Person : IComparable<Person>
+    {
+        public string name;
+
+        public Person(string name)
+        { this.name = name; }
+        public string Name { get { return name; } }
+        virtual public void Print()
+        {
+            Console.WriteLine("Name: {0}", this.name);
+        }
+        
+        int IComparable<Person>.CompareTo(Person other)
+        {
+            return name.CompareTo(other.name);
+        }
+
+        public class Staff : Person
+        {
+            public int salary;
+            public Staff(string name, int salary) : base(name)
+            {
+                this.salary = salary;
+            }
+
+            override public void Print()
+            {
+                Console.WriteLine("Person {0} has salary - {1}", name, salary);
+            }
+            
+            
+                
+            
+        }
+
+        public class Teacher : Staff
+        {
+            public string subject;
+            public Teacher(string name, int salary, string subject) : base(name, salary)
+            {
+                this.subject = subject;
+            }
+            public override string ToString()
+            {
+                return "Teacher " + "has salary" + salary ;
+            }
+        }
+        public class Developer : Staff
+        {
+            public string level;
+            public Developer(string name, int salary, string level) : base(name, salary)
+            {
+                this.level = level;
+            }
+            public override string ToString()
+            {
+                return "Developer " + "has salary" + salary;
+            }
+        }
+
+
+
+
+
+        static void Main(string[] args)
+        {
+            string writePath = @"C:\Users\User\Study\08_C#\02_Tasks\Task_8\Note.txt";
+            
+            List<Person> persons = new List<Person>();
+            persons.Add(new Teacher("Pete", 4500, "English"));
+            persons.Add(new Teacher("Ollo", 4100, "Java"));
+            persons.Add(new Teacher("Rate", 5500, "Python"));
+            persons.Add(new Developer("Sete", 4900, "Junior"));
+            persons.Add(new Developer("LLete", 7500, "Senior"));
+            persons.Add(new Developer("Mete", 6500, "Midlle"));
+            foreach (var p in persons)
+            {
+                p.Print();
+            }
+            Console.WriteLine("Please enter Person's name");
+            string inputName = Console.ReadLine();
+            bool k = false;
+            foreach (var p in persons)
+            {
+                if (inputName == p.Name)
+                {
+                    p.Print();
+                    k = true;
+                }
+
+            }
+            if (!k) { Console.WriteLine("There isn't person with this name."); }
+            persons.Sort();
+            foreach (var p in persons)
+            {
+                p.Print();
+                using (StreamWriter sw1 = new StreamWriter(writePath, true, System.Text.Encoding.Default))
+                {
+                    sw1.WriteLine(p);
+
+                }
+            }
+
+
+
+        }
+    }
+}

@@ -1,0 +1,51 @@
+using System;
+//1) Create abstract class Shape with field name and property Name.
+// Add constructor with 1 parameter and abstract methods Area() and Perimeter(), which can return area and perimeter of shape; 
+//Create classes Circle, Square derived from Shape with field radius(for Circle) and side(for Square).   Add necessary constructors, properties to these classes, override methods from abstract class Shape. 
+//a) In Main() create list of Shape, then ask user to enter data of 10 different shapes.Write name, area and perimeter of all shapes. 
+//b) Find shape with the largest perimeter and print its name.
+//3) Sort shapes by area and print obtained list(Remember about IComparable)
+
+
+namespace HW_8
+{
+    abstract class Shape: IComparable<Shape>
+    {
+            public string name;
+            public string propety;
+            public Shape(string name, string propety)
+            {
+                this.name = name;
+                this.propety = propety;
+            }
+            public string Area()
+            {
+                return name + "has area" + propety;
+            }
+            public string Perimeter()
+            {
+                return name + "has area" + propety;
+            }
+            int IComparable<Shape>.CompareTo(Shape other)
+            {
+                return name.CompareTo(other.name);
+            }
+        public class Circle: Shape
+            {
+                public float radius;
+                public Circle(string name, string propety,int radius): base(name, propety)
+                {
+                    this.radius = radius;
+                }
+
+            }
+
+       
+
+        static void Main(string[] args)
+        {
+           
+        }
+    
+    }
+}
