@@ -1,0 +1,131 @@
+"""Provides a scripting component.
+    Inputs:
+        x: The x script variable
+        y: The y script variable
+    Output:
+        a: The a output variable"""
+
+__author__ = "User"
+__version__ = "2020.01.03"
+
+import rhinoscriptsyntax as rs
+import Rhino.Geometry as rg
+import ghpythonlib.components as ghc
+import ghpythonlib.treehelpers as th
+import Rhino
+import clr
+import System
+
+
+clr.AddReference("Grasshopper")
+from Grasshopper.Kernel.Data import GH_Path
+from Grasshopper import DataTree
+dataTree = DataTree[System.Object]()
+
+
+#baselines = []
+#baselines += wallBaseline
+nurbs_curves = []
+polyline_curves = []
+line_curves = []
+#type_objects= []
+counter = 1
+if len(wallBaseline) != 0 and wallBaseline[0] != None:
+        #Check for guid
+        for i,b in enumerate(wallBaseline):
+            if type(b)==type(rs.AddPoint(0,0,0)):
+                wallBaseline[i] = rs.coercecurve(b)
+                #print rg.AnnotationType(b)
+                
+            else:
+                print "None"
+                
+            #sorting type curves 
+            polyline_curves = [ b for b in wallBaseline if Rhino.Input.StringParser.ToString(b)=='Rhino.Geometry.PolylineCurve']
+            nurbs_curves = [ b for b in wallBaseline if Rhino.Input.StringParser.ToString(b)=='Rhino.Geometry.NurbsCurve']
+            
+            #sorting closed or not closed polyline curves
+            polyline_curves_closed = [ i for i in polyline_curves if ghc.Closed(i)[0] == True]
+            polyline_curves_unclosed = [ i for i in polyline_curves if ghc.Closed(i)[0] == False]
+            
+            #sorting closed or not closed nurbs curves
+            nurbs_curves_closed = [ i for i in nurbs_curves if ghc.Closed(i)[0] == True]
+            nurbs_curves_unclosed = [ i for i in nurbs_curves if ghc.Closed(i)[0] == False]
+            
+            #creating start and end for lines of polyline curves which are closed
+            start_closed = [ ghc.DivideCurve(i,1,True)[0] for i in polyline_curves_closed ]
+            e_start_closed = start_closed 
+            end_closed = []
+            
+            for item in e_start_closed:
+                item += [item[0]] 
+                end_closed += [item[1:]]
+            
+            # creating lines of polyline curves which are closed
+            line_closed = map(lambda start, end : ghc.Line(start, end), start_closed, end_closed)
+            line_closed = [ i[:-1] for i in line_closed ]
+            
+            #creating start and end for lines of polyline curves which aren't closed
+            start_unclosed = [ ghc.DivideCurve(i,1,True)[0] for i in polyline_curves_unclosed ]
+            end_unclosed = []
+            for item in start_unclosed:
+                end_unclosed += [item[1:]]
+            
+            # creating lines of polyline curves which are unclosed
+            line_unclosed = map(lambda start, end : ghc.Line(start, end), start_unclosed, end_unclosed)
+            line_unclosed = [ i[:-1] for i in line_unclosed ]
+            
+            #craeting ancer points for ends of line
+            
+            #start points 
+            vc_start_closed = map(lambda x, y :ghc.Vector2Pt(x,y,True)[0], start_closed, end_closed)
+            vc_start_closed = [ i[:-1] for i in vc_start_closed]
+            vc_start_unclosed = map(lambda x, y :ghc.Vector2Pt(x,y,True)[0], start_unclosed, end_unclosed)
+            vc_start_unclosed = [ i[:-1] for i in vc_start_unclosed]
+            ancer_start_closed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, 20)))[0], start_closed, vc_start_closed)
+            ancer_start_closed = [ i[:-1] for i in ancer_start_closed]
+
+            ancer_start_unclosed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, 20)))[0], start_unclosed, vc_start_unclosed)
+            ancer_start_unclosed = [ i[:-1] for i in ancer_start_unclosed]
+            
+            #end points
+            vc_end_closed = map(lambda x, y :ghc.Vector2Pt(y,x,True)[0], start_closed, end_closed)
+            vc_end_unclosed = map(lambda x, y :ghc.Vector2Pt(y,x,True)[0], start_unclosed, end_unclosed)
+            ancer_end_closed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, 20)))[0], end_closed, vc_end_closed)
+#            ancer_end_closed = [ i[:-1] for i in ancer_end_closed]
+            ancer_end_unclosed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, 20)))[0], end_unclosed, vc_end_unclosed)
+            
+#            dataTree = [ i, GH_Path(start_closed.index(i) for i in start_closed]
+#            for i, item_list in enumerate(start_closed):
+#                path = GH_Path(i)
+#                dataTree.Add(item_list, path)
+            
+#           
+a= ancer_start_closed[3]
+#b = line_closed
+# curve.IsLinear() or 
+
+
+#for line in enumerate(wallBaseline):
+#    type_object = rs.IsCurve(line)
+#    curve_plannar = rs.IsCurvePlanar(line) 
+#    print type_object
+#    if type_object == True and curve_plannar == True :
+#        if rs.IsPolyline(line):
+#            polyline_curves += line
+#            break
+#        else:
+#                continue
+#        if rs.IsLine(line):
+#            line_curves +=line
+#        else:
+#            ref_curves += line
+#        if rs.IsPolyline(line) == false and rs.IsLine(line) == false:
+#            ref_curves += type_object
+#        if rs.IsCurve(type_object):
+#            print "The object is a curve."
+#        else:
+#            print "The object isn't a curve."
+#type_object = rs.GetObjects(wallBaseline)
+#print (ref_curves)
+
