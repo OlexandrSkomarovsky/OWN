@@ -1,0 +1,186 @@
+"""Provides a scripting component.
+    Inputs:
+        x: The x script variable
+        y: The y script variable
+    Output:
+        a: The a output variable"""
+        
+__author__ = "User"
+__version__ = "2019.10.11"
+        
+import rhinoscriptsyntax as rs
+import Rhino.Geometry as rg
+import ghpythonlib.components as ghc
+import ghpythonlib.treehelpers as th
+import Rhino
+        
+        
+def main(height, thickness, length_drywall, height_drywall, *baseline):
+    #list to fill with detailed wall geometry
+    nurbs_curves = []
+    polyline_curves = []
+    line_curves = []
+    walldet = []
+    
+    
+    if len(wallBaseline) != 0 and wallBaseline[0] != None:
+            #Check for guid
+            for i,b in enumerate(wallBaseline):
+                if type(b)==type(rs.AddPoint(0,0,0)):
+                    wallBaseline[i] = rs.coercecurve(b)
+                    #print rg.AnnotationType(b)
+                    
+                else:
+                    print "None"
+                    
+                #sorting type curves 
+                polyline_curves = [ b for b in wallBaseline if Rhino.Input.StringParser.ToString(b)=='Rhino.Geometry.PolylineCurve']
+                nurbs_curves = [ b for b in wallBaseline if Rhino.Input.StringParser.ToString(b)=='Rhino.Geometry.NurbsCurve']
+                
+                #sorting closed or not closed polyline curves
+                polyline_curves_closed = [ i for i in polyline_curves if ghc.Closed(i)[0] == True]
+                polyline_curves_unclosed = [ i for i in polyline_curves if ghc.Closed(i)[0] == False]
+                
+                #sorting closed or not closed nurbs curves
+                nurbs_curves_closed = [ i for i in nurbs_curves if ghc.Closed(i)[0] == True]
+                nurbs_curves_unclosed = [ i for i in nurbs_curves if ghc.Closed(i)[0] == False]
+                
+                #creating start and end for lines of polyline curves which are closed
+                start_closed = [ ghc.DivideCurve(i,1,True)[0] for i in polyline_curves_closed ]
+                e_start_closed = start_closed 
+                end_closed = []
+                
+                for item in e_start_closed:
+                    item += [item[0]] 
+                    end_closed += [item[1:]]
+                
+                # creating lines of polyline curves which are closed
+                line_closed = map(lambda start, end : ghc.Line(start, end), start_closed, end_closed)
+                line_closed = [ i[:-1] for i in line_closed ]
+                
+                #creating start and end for lines of polyline curves which aren't closed
+                start_unclosed = [ ghc.DivideCurve(i,1,True)[0] for i in polyline_curves_unclosed ]
+                end_unclosed = []
+                for item in start_unclosed:
+                    end_unclosed += [item[1:]]
+                
+                # creating lines of polyline curves which are unclosed
+                line_unclosed = map(lambda start, end : ghc.Line(start, end), start_unclosed, end_unclosed)
+                line_unclosed = [ i[:-1] for i in line_unclosed ]
+                
+                #craeting ancer points for ends of line
+                
+                #start points 
+                vc_start_closed = map(lambda x, y :ghc.Vector2Pt(x,y,True)[0], start_closed, end_closed)
+                vc_start_closed = [ i[:-1] for i in vc_start_closed]
+                vc_start_unclosed = map(lambda x, y :ghc.Vector2Pt(x,y,True)[0], start_unclosed, end_unclosed)
+                vc_start_unclosed = [ i[:-1] for i in vc_start_unclosed]
+                
+                ancer_start_closed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, thickness*0.6)))[0], start_closed, vc_start_closed)
+                ancer_start_closed = [ i[:-1] for i in ancer_start_closed]
+                
+                ancer_start_unclosed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, thickness*0.6)))[0], start_unclosed, vc_start_unclosed)
+                ancer_start_unclosed = [ i[:-1] for i in ancer_start_unclosed]
+                
+                #end points
+                vc_end_unclosed = map(lambda x, y :ghc.Vector2Pt(y,x,True)[0], start_unclosed, end_unclosed)
+                ancer_end_closed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, -thickness*0.01)))[0], end_closed, vc_start_closed)
+                ancer_end_unclosed = map(lambda geometry, vector: (ghc.Move(geometry, ghc.Amplitude( vector, thickness*0.01)))[0], end_unclosed, vc_end_unclosed)
+                ancer_end_unclosed = [ i[:-1] for i in ancer_end_unclosed]
+                
+                #base line for horizontal profiles
+                base_line_closed = map(lambda start, end : ghc.Line(start, end), ancer_start_closed, ancer_end_closed)
+                base_line_unclosed = map(lambda start, end : ghc.Line(start, end), ancer_start_unclosed, ancer_end_unclosed)
+                base_line_unclosed_like_line = [i for i in base_line_unclosed if Rhino.Input.StringParser.ToString(i) != 'IronPython.Runtime.List'  ]
+                base_line_unclosed = [i for i in base_line_unclosed if Rhino.Input.StringParser.ToString(i) == 'IronPython.Runtime.List'  ]
+                for i in base_line_unclosed_like_line:
+                    base_line_unclosed[0] += [i]
+                base_line = []
+                for i in base_line_closed:
+                    base_line += [i]
+                for i in base_line_unclosed:
+                    base_line += [i]
+    
+    
+    
+    #create a wall for each curve 
+    for line in base_line:
+        #list to fill in iteration
+        profile_thickness = thickness -25
+        
+        wall = []
+        offsets = map(lambda x: ghc.OffsetCurve(line, x/2, rg.Plane.WorldXY, 0), [profile_thickness, -profile_thickness])
+        wallbase = ghc.EdgeSurface(offsets[0], offsets[1])
+        of_ = []
+        for i in offsets:
+            of_ += i
+            
+        #list of horizontal profiles
+        profile_lower = ghc.Extrude(wallbase, ghc.VectorXYZ(0,0,profile_thickness/2)[0])
+        profile_upper = (ghc.Move(profile_lower, ghc.VectorXYZ(0,0,height-(profile_thickness/2))[0]))[0]
+        wall += profile_lower
+        wall += profile_upper
+        
+        #length of list of horizontal profiles
+        profile_lower_length = map(lambda x: ghc.Length(x), of_)
+        profile_horizontal_length = sum(profile_lower_length)*2
+        print 'This is total length of horizontal profiles - ', profile_horizontal_length
+        
+        
+#        list of vertical profiles
+        nums_ancer = map(lambda x: x/length_drywall, ghc.Length(line))
+        ancer_pt = (ghc.DivideCurve(of_, nums_ancer, False))
+        ancer_pts = map(lambda x: rg.Point3d(x),ancer_pt[0])
+        
+        frame_horizontal = (ghc.HorizontalFrames(line, nums_ancer))[0]
+        frame_horizontal = (ghc.Move(frame_horizontal, ghc.VectorXYZ(0,0,height/2)[0]))[0]
+        vertical_profiles = map(lambda base: ghc.CenterBox(base, profile_thickness/2, profile_thickness/2, (height-profile_thickness)/2), frame_horizontal)   
+        wall += vertical_profiles
+        
+        #length of list of vertical profiles
+        profile_vertical_length = [i * height for i in nums_ancer]
+        profile_vertical_length = sum(profile_vertical_length)
+        print 'This is total length of vertical profiles - ',profile_vertical_length
+        
+#        list of drywall 
+        drywall_base_line = map(lambda x,d_th: ghc.OffsetCurve(x, d_th, rg.Plane.WorldXY, 0), offsets,[12.5, -12.5])
+        drywall_base = ((ghc.EdgeSurface(offsets[0], drywall_base_line[0])) + (ghc.EdgeSurface(offsets[1], drywall_base_line[1])))
+        drywall = map(lambda x: ghc.Extrude(x, ghc.VectorXYZ(0,0,height)[0]), offsets)
+        d = []
+        for i in drywall:
+                d += i
+        d_1 = []
+        for x in d:
+            d_1 += i
+        drywall = d
+        drywall_area = ghc.Area(drywall)[0]
+        drywall_area = sum(drywall_area )
+        drywall_list_area = length_drywall * height_drywall
+        quantity_drywall_lists = drywall_area /drywall_list_area
+        print 'This is total quantity of drywalls -', quantity_drywall_lists
+        
+        
+#        d_list = map(lambda x, y: ghc.Shatter(x,y), of_, ancer_pt[2])
+#        print d_list[0][2]
+#        return d_list[0][1]
+#        d_list_base = ghc
+#        
+        
+
+        wall += drywall
+
+        #add wall to output list
+        walldet += wall
+
+    return walldet
+        
+#run script if curve input
+if wallBaseline:
+    #set data if no user input
+    wheight = wallHeight if wallHeight else 3000
+    wthickness = wallThickness if wallThickness else 300
+    w_length_drywall = max_Length_drywall if max_Length_drywall else 600
+    w_height_drywall = max_Height_drywall if max_Height_drywall else 1000
+            
+    #wallbaseline is set as centerline of wall
+    wallDetailed = main(wheight, wthickness, w_length_drywall, w_height_drywall, wallBaseline)
